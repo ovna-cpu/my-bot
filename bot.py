@@ -206,8 +206,8 @@ def handle_callbacks(call):
             description = professions.get(str(arcana_num), "Описание не найдено.")
             
             success_text = (
-                f"🎉 **Спасибо за спонсорскую поддержку!**\n\n"
-                f"🔮 **Ваш Вектор Профессии (Аркан {arcana_num}):**\n\n"
+                f"🎉 **Спасибо за поддержку!**\n\n"
+                f"🔮 **Ваш Вектор Профессии:**\n\n"
                 f"{description}"
             )
             try:
