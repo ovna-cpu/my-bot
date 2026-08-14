@@ -97,23 +97,10 @@ def calculate_vector(date_str):
 def send_welcome(message):
     chat_id = message.chat.id
     user_calculations.pop(chat_id, None)
-    admin_id = load_admin_id()
     
-    # Создаем постоянную кнопку внизу экрана (Reply Keyboard)
     markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn_calc = types.KeyboardButton("🔮 Запустить калькулятор")
     markup_reply.add(btn_calc)
-
-    if admin_id is None:
-        save_admin_id(chat_id)
-        admin_text = (
-            "👑 **Вы первый пользователь бота!**\n\n"
-            "Вы автоматически зарегистрированы как **Администратор**.\n"
-            "Все запросы на подтверждение донатов будут приходить сюда.\n\n"
-            "Нажмите кнопку ниже или отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ` для теста:"
-        )
-        bot.send_message(chat_id, admin_text, reply_markup=markup_reply, parse_mode="Markdown")
-        return
 
     welcome_text = (
         "🔮 **Приветствуем в калькуляторе «Вектор Профессии»!**\n\n"
@@ -128,8 +115,10 @@ def handle_button_click(message):
 @bot.message_handler(commands=['setadmin'])
 def set_admin_manually(message):
     chat_id = message.chat.id
-    save_admin_id(chat_id)
-    bot.send_message(chat_id, "👑 Вы успешно назначены Администратором бота!")
+    if save_admin_id(chat_id):
+        bot.send_message(chat_id, f"👑 Готово! Теперь вы главный Администратор этого бота.")
+    else:
+        bot.send_message(chat_id, "❌ Ошибка сохранения администратора.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -180,7 +169,7 @@ def handle_callbacks(call):
         bot.send_message(chat_id, "⏳ Запрос отправлен администратору. Расчет откроется после подтверждения.")
         
         if admin_id is None:
-            bot.send_message(chat_id, "⚠️ Администратор не зарегистрирован.")
+            bot.send_message(chat_id, "⚠️ Администратор не зарегистрирован. Отправьте команду /setadmin")
             bot.answer_callback_query(call.id)
             return
             
