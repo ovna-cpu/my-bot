@@ -14,6 +14,11 @@ app = Flask('')
 def home():
     return "Бот работает!"
 
+# Специальный легкий маршрут для пингеров (UptimeRobot)
+@app.route('/health')
+def health():
+    return "OK", 200
+
 def run_web_server():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
@@ -118,7 +123,7 @@ def set_admin_manually(message):
     if save_admin_id(chat_id):
         bot.send_message(chat_id, f"👑 Готово! Теперь вы главный Администратор этого бота.")
     else:
-        bot.send_message(chat_id, "❌ Ошибка сохранения администратора.")
+        bot.send_message(chat_id, f"❌ Ошибка сохранения администратора.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -227,7 +232,6 @@ if __name__ == '__main__':
     threading.Thread(target=run_web_server, daemon=True).start()
     print("Бот успешно запущен...")
     
-    # Сбрасываем старые вебхуки, чтобы заработал polling
     try:
         bot.remove_webhook()
     except Exception:
