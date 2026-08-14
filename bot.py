@@ -226,4 +226,11 @@ def handle_callbacks(call):
 if __name__ == '__main__':
     threading.Thread(target=run_web_server, daemon=True).start()
     print("Бот успешно запущен...")
+    
+    # Сбрасываем старые вебхуки, чтобы заработал polling
+    try:
+        bot.remove_webhook()
+    except Exception:
+        pass
+        
     bot.infinity_polling()
