@@ -19,11 +19,9 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-# Ваш токен уже встроен в программу
 BOT_TOKEN = "8178571912:AAFz65csRG_C1R5F8ZQWbJJ8wFf1shXfCvc"
 ADMIN_FILE = "admin_config.json"
 
-# Здесь вы можете изменить номер телефона на ваш реальный
 PAYMENT_REQUISITES = (
     "🌟 Реквизиты для поддержки проекта:\n\n"
     "💳 Перевод по СБП (на карту любого банка):\n"
@@ -101,22 +99,31 @@ def send_welcome(message):
     user_calculations.pop(chat_id, None)
     admin_id = load_admin_id()
     
+    # Создаем постоянную кнопку внизу экрана (Reply Keyboard)
+    markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn_calc = types.KeyboardButton("🔮 Запустить калькулятор")
+    markup_reply.add(btn_calc)
+
     if admin_id is None:
         save_admin_id(chat_id)
         admin_text = (
             "👑 **Вы первый пользователь бота!**\n\n"
             "Вы автоматически зарегистрированы как **Администратор**.\n"
             "Все запросы на подтверждение донатов будут приходить сюда.\n\n"
-            "Отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ` для теста:"
+            "Нажмите кнопку ниже или отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ` для теста:"
         )
-        bot.send_message(chat_id, admin_text, parse_mode="Markdown")
+        bot.send_message(chat_id, admin_text, reply_markup=markup_reply, parse_mode="Markdown")
         return
 
     welcome_text = (
         "🔮 **Приветствуем в калькуляторе «Вектор Профессии»!**\n\n"
-        "📅 Пожалуйста, **отправьте вашу дату рождения** в формате `ДД.ММ.ГГГГ` (например, `02.02.1991`):"
+        "📅 Пожалуйста, **нажмите кнопку ниже** или отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ` (например, `02.02.1991`):"
     )
-    bot.send_message(chat_id, welcome_text, parse_mode="Markdown")
+    bot.send_message(chat_id, welcome_text, reply_markup=markup_reply, parse_mode="Markdown")
+
+@bot.message_handler(func=lambda message: message.text == "🔮 Запустить калькулятор")
+def handle_button_click(message):
+    send_welcome(message)
 
 @bot.message_handler(commands=['setadmin'])
 def set_admin_manually(message):
