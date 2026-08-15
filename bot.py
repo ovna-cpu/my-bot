@@ -23,10 +23,7 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-# НОВЫЙ ТОКЕН ВСТАВЛЕН СЮДА 👇
 BOT_TOKEN = "8178571912:AAFToRD2h5sQevZDziQDqylAsJifIK1PvxE"
-
-# 👇 ВСТАВЛЕН ВАШ TELEGRAM ID 👇
 ADMIN_ID = 381819608  
 
 PAYMENT_REQUISITES = (
@@ -47,7 +44,7 @@ except Exception:
 bot = telebot.TeleBot(BOT_TOKEN)
 user_calculations = {}
 
-# Формула расчета Вектора Профессии (22 Аркана)
+# 👇 ОРИГИНАЛЬНАЯ ФОРМУЛА РАСЧЕТА ИЗ PHP 👇
 def calculate_vector(date_str):
     parts = date_str.split('.')
     if len(parts) != 3:
@@ -58,29 +55,16 @@ def calculate_vector(date_str):
         year = int(parts[2])
     except ValueError:
         return None
+        
+    yearSum = sum(int(x) for x in str(year))
+    sigma = day + month + yearSum
+    b = day + month
+    code = (5 * sigma + b) % 22
     
-    d = day
-    if d > 22:
-        d = sum(int(x) for x in str(d))
-    if d > 22:
-        d = sum(int(x) for x in str(d))
+    if code == 0:
+        code = 22
         
-    m = month
-    if m > 22:
-        m = sum(int(x) for x in str(m))
-        
-    y = sum(int(x) for x in str(year))
-    while y > 22:
-        y = sum(int(x) for x in str(y))
-        
-    total = d + m + y
-    while total > 22:
-        total = sum(int(x) for x in str(total))
-        
-    if total == 0:
-        total = 22
-        
-    return total
+    return code
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -101,7 +85,6 @@ def send_welcome(message):
 def handle_button_click(message):
     send_welcome(message)
 
-# Команда больше не нужна для установки админа, но пусть показывает ID, если кто-то нажмет
 @bot.message_handler(commands=['setadmin'])
 def show_id_info(message):
     bot.send_message(message.chat.id, f"Ваш Telegram ID: {message.chat.id}\n(Администратор теперь прописан жестко в коде)")
@@ -185,7 +168,6 @@ def handle_callbacks(call):
             arcana_num = calc['arcana']
             description = professions.get(str(arcana_num), "Описание не найдено.")
             
-            # 👇 ИЗМЕНЕННЫЙ ТЕКСТ (без арканов и слова "спонсорскую") 👇
             success_text = (
                 f"🎉 **Спасибо за поддержку!**\n\n"
                 f"🔮 **Ваш Вектор Профессии:**\n\n"
