@@ -77,7 +77,7 @@ def send_welcome(message):
 
     welcome_text = (
         "🔮 **Приветствуем в калькуляторе «Вектор Профессии»!**\n\n"
-        "📅 Пожалуйста, **нажмите кнопку ниже** или отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ` (например, `02.02.1991`):"
+        "📅 Пожалуйста, **нажмите кнопку ниже** или отправьте вашу дату рождения в формате `ДД.ММ.ГГГГ`:"
     )
     bot.send_message(chat_id, welcome_text, reply_markup=markup_reply, parse_mode="Markdown")
 
@@ -107,14 +107,12 @@ def handle_message(message):
     
     info_text = (
         f"✅ **Расчёт для даты {text} готов!**\n\n"
-        "🔒 **Доступно для спонсоров проекта**\n\n"
-        "Спонсорский взнос помогает нам улучшать алгоритмы расчёта.\n\n"
-        "🎁 В знак благодарности мы предоставим вам доступ к вашему расчёту на 24 часа."
+        "🔒 **Доступно после оплаты**\n\n"
     )
     
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_pay = types.InlineKeyboardButton("🌟 Стать спонсором", callback_data="show_requisites")
-    btn_check = types.InlineKeyboardButton("✅ Я перевел(а) поддержку", callback_data="confirm_payment")
+    btn_pay = types.InlineKeyboardButton("🌟 Оплатить", callback_data="show_requisites")
+    btn_check = types.InlineKeyboardButton("✅ Я оплатил(а)", callback_data="confirm_payment")
     markup.add(btn_pay, btn_check)
     
     bot.send_message(chat_id, info_text, reply_markup=markup, parse_mode="Markdown")
@@ -148,7 +146,7 @@ def handle_callbacks(call):
         
         username = f"@{call.from_user.username}" if call.from_user.username else f"ID: {chat_id}"
         admin_text = (
-            f"🔔 **Новый спонсорский запрос!**\n\n"
+            f"🔔 **Новая оплата!**\n\n"
             f"👤 Пользователь: {call.from_user.first_name} ({username})\n"
             f"📅 Дата рождения: `{calc['date']}`\n"
             f"🔮 Вектор: **{calc['arcana']}**"
@@ -184,7 +182,7 @@ def handle_callbacks(call):
     elif call.data.startswith("admin_reject_"):
         user_chat_id = int(call.data.replace("admin_reject_", ""))
         try:
-            bot.send_message(user_chat_id, "⚠️ Спонсорский перевод не подтвержден.")
+            bot.send_message(user_chat_id, "⚠️ Денежный перевод не подтвержден.")
             bot.send_message(chat_id, "❌ Запрос отклонен.")
             bot.edit_message_reply_markup(chat_id, call.message.message_id, reply_markup=None)
         except Exception as e:
