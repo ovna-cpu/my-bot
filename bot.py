@@ -14,7 +14,6 @@ app = Flask('')
 def home():
     return "Бот работает!"
 
-# Специальный легкий маршрут для пингеров (UptimeRobot)
 @app.route('/health')
 def health():
     return "OK", 200
@@ -25,7 +24,9 @@ def run_web_server():
 
 # === НАСТРОЙКИ БОТА ===
 BOT_TOKEN = "8178571912:AAFz65csRG_C1R5F8ZQWbJJ8wFf1shXfCvc"
-ADMIN_FILE = "admin_config.json"
+
+# 👇 ВСТАВЛЕН ВАШ TELEGRAM ID 👇
+ADMIN_ID = 381819608  
 
 PAYMENT_REQUISITES = (
     "🌟 Реквизиты для поддержки проекта:\n\n"
@@ -34,24 +35,6 @@ PAYMENT_REQUISITES = (
     "Сумма спонсорского взноса: 100 ₽\n\n"
     "После перевода обязательно нажмите кнопку ниже: «✅ Я перевел(а) поддержку»"
 )
-
-def load_admin_id():
-    if os.path.exists(ADMIN_FILE):
-        try:
-            with open(ADMIN_FILE, "r") as f:
-                data = json.load(f)
-                return data.get("admin_id")
-        except:
-            return None
-    return None
-
-def save_admin_id(admin_id):
-    try:
-        with open(ADMIN_FILE, "w") as f:
-            json.dump({"admin_id": admin_id}, f)
-        return True
-    except:
-        return False
 
 # Загрузка описаний профессий
 try:
@@ -117,13 +100,10 @@ def send_welcome(message):
 def handle_button_click(message):
     send_welcome(message)
 
+# Команда больше не нужна для установки админа, но пусть показывает ID, если кто-то нажмет
 @bot.message_handler(commands=['setadmin'])
-def set_admin_manually(message):
-    chat_id = message.chat.id
-    if save_admin_id(chat_id):
-        bot.send_message(chat_id, f"👑 Готово! Теперь вы главный Администратор этого бота.")
-    else:
-        bot.send_message(chat_id, f"❌ Ошибка сохранения администратора.")
+def show_id_info(message):
+    bot.send_message(message.chat.id, f"Ваш Telegram ID: {message.chat.id}\n(Администратор теперь прописан жестко в коде)")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -158,7 +138,6 @@ def handle_message(message):
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callbacks(call):
     chat_id = call.message.chat.id
-    admin_id = load_admin_id()
     
     if call.data == "show_requisites":
         bot.send_message(chat_id, PAYMENT_REQUISITES)
@@ -173,8 +152,8 @@ def handle_callbacks(call):
             
         bot.send_message(chat_id, "⏳ Запрос отправлен администратору. Расчет откроется после подтверждения.")
         
-        if admin_id is None:
-            bot.send_message(chat_id, "⚠️ Администратор не зарегистрирован. Отправьте команду /setadmin")
+        if ADMIN_ID == 000000000:
+            bot.send_message(chat_id, "⚠️ Ошибка кода: ID администратора не заменен в файле main.py!")
             bot.answer_callback_query(call.id)
             return
             
@@ -192,7 +171,7 @@ def handle_callbacks(call):
         )
         
         try:
-            bot.send_message(admin_id, admin_text, reply_markup=admin_markup, parse_mode="Markdown")
+            bot.send_message(ADMIN_ID, admin_text, reply_markup=admin_markup, parse_mode="Markdown")
         except Exception as e:
             print(f"Ошибка отправки админу: {e}")
         bot.answer_callback_query(call.id)
@@ -205,6 +184,7 @@ def handle_callbacks(call):
             arcana_num = calc['arcana']
             description = professions.get(str(arcana_num), "Описание не найдено.")
             
+            # 👇 ИЗМЕНЕННЫЙ ТЕКСТ (без арканов и слова "спонсорскую") 👇
             success_text = (
                 f"🎉 **Спасибо за поддержку!**\n\n"
                 f"🔮 **Ваш Вектор Профессии:**\n\n"
