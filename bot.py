@@ -23,7 +23,8 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-BOT_TOKEN = "8178571912:AAFz65csRG_C1R5F8ZQWbJJ8wFf1shXfCvc"
+# НОВЫЙ ТОКЕН ВСТАВЛЕН СЮДА 👇
+BOT_TOKEN = "8178571912:AAFToRD2h5sQevZDziQDqylAsJifIK1PvxE"
 
 # 👇 ВСТАВЛЕН ВАШ TELEGRAM ID 👇
 ADMIN_ID = 381819608  
