@@ -2,8 +2,25 @@
 import re
 import json
 import os
+import threading
 import telebot
 from telebot import types
+from flask import Flask
+
+# --- ВЕБ-СЕРВЕР ДЛЯ RENDER ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Бот калькулятора активен!"
+
+@app.route('/health')
+def health():
+    return "OK", 200
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
 BOT_TOKEN = "8178571912:AAFz65csRG_C1R5F8ZQWbJJ8wFf1shXfCvc"
@@ -36,7 +53,7 @@ def save_admin_id(admin_id):
     except:
         return False
 
-# Загрузка описаний профессий из файла
+# Загрузка описаний профессий
 try:
     with open("professions.json", "r", encoding="utf-8") as f:
         professions = json.load(f)
@@ -45,7 +62,7 @@ except Exception:
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Временное хранилище расчетов пользователей {chat_id: {"date": str, "arcana": int}}
+# Временное хранилище расчетов пользователей
 user_calculations = {}
 
 # === ОРИГИНАЛЬНАЯ ФОРМУЛА ИЗ PHP ===
@@ -114,7 +131,6 @@ def handle_message(message):
         bot.send_message(chat_id, "⚠️ Ошибка в дате. Пожалуйста, отправьте вашу дату рождения в формате ДД.ММ.ГГГГ:")
         return
 
-    # Сохраняем расчет пользователя
     user_calculations[chat_id] = {
         "date": text,
         "arcana": arcana
@@ -133,13 +149,13 @@ def handle_message(message):
 
     bot.send_message(chat_id, ready_text, reply_markup=markup)
 
-# Обработка нажатий на инлайн-кнопки
+# Обработка нажатий на кнопки
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
     chat_id = call.message.chat.id
     data = call.data
 
-    # Пользователь нажал "🌟 ОПЛАТИТЬ" -> СМС №3
+    # СМС №3
     if data == "pay":
         markup = types.InlineKeyboardMarkup()
         btn_confirm = types.InlineKeyboardButton("✅ Я оплатил(а)", callback_data="i_paid")
@@ -148,7 +164,7 @@ def handle_callback(call):
         bot.send_message(chat_id, PAYMENT_REQUISITES, reply_markup=markup)
         bot.answer_callback_query(call.id)
 
-    # Пользователь нажал "✅ Я оплатил(а)" -> СМС №4 и уведомление админу
+    # СМС №4 и уведомление админу
     elif data == "i_paid":
         bot.send_message(
             chat_id, 
@@ -156,7 +172,6 @@ def handle_callback(call):
         )
         bot.answer_callback_query(call.id)
 
-        # Отправляем уведомление администратору
         admin_id = load_admin_id()
         if admin_id:
             user_info = user_calculations.get(chat_id, {})
@@ -183,11 +198,10 @@ def handle_callback(call):
             except Exception as e:
                 print(f"Ошибка отправки сообщения админу: {e}")
 
-    # Администратор нажал "✅ Подтвердить"
+    # Подтверждение от администратора
     elif data.startswith("approve_"):
         target_chat_id = int(data.split("_")[1])
 
-        # Берем данные расчета
         user_info = user_calculations.get(target_chat_id, {})
         arcana = user_info.get("arcana")
 
@@ -198,7 +212,6 @@ def handle_callback(call):
         else:
             desc = "Описание профессии формируется..."
 
-        # ЧЕТВЁРТОЕ СМС (ОДОБРЕНО)
         success_msg = (
             f"Ваш Вектор Профессии:\n\n"
             f"{desc}"
@@ -217,11 +230,9 @@ def handle_callback(call):
 
         bot.answer_callback_query(call.id)
 
-    # Администратор нажал "❌ Отклонить"
+    # Отклонение от администратора
     elif data.startswith("reject_"):
         target_chat_id = int(data.split("_")[1])
-
-        # ЧЕТВЁРТОЕ СМС (НЕ ОДОБРЕНО)
         reject_msg = "⚠️ Денежный перевод не подтвержден."
 
         try:
@@ -237,5 +248,9 @@ def handle_callback(call):
 
         bot.answer_callback_query(call.id)
 
+# Запуск веб-сервера и бота
 if __name__ == "__main__":
+    t = threading.Thread(target=run_web_server)
+    t.daemon = True
+    t.start()
     bot.infinity_polling()
