@@ -23,8 +23,8 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-BOT_TOKEN = "8178571912:AAFToRD2h5sQevZDziQDqylAsJifIK1PvxE"
-ADMIN_FILE = "admin_config.json"
+BOT_TOKEN = "8178571912:AAFbhaKmLRs1kPtSNqqTjiIRV88W5PExXzU"
+ADMIN_ID = 381819608  # Ваш Telegram ID для уведомлений
 
 # Реквизиты для оплаты
 PAYMENT_REQUISITES = (
@@ -33,25 +33,6 @@ PAYMENT_REQUISITES = (
     "После перевода обязательно нажмите кнопку ниже: \n"
     "✅ Я оплатил(а)"
 )
-
-# Функции для работы с ID администратора
-def load_admin_id():
-    if os.path.exists(ADMIN_FILE):
-        try:
-            with open(ADMIN_FILE, "r") as f:
-                data = json.load(f)
-                return data.get("admin_id")
-        except:
-            return None
-    return None
-
-def save_admin_id(admin_id):
-    try:
-        with open(ADMIN_FILE, "w") as f:
-            json.dump({"admin_id": admin_id}, f)
-        return True
-    except:
-        return False
 
 # Загрузка описаний профессий
 try:
@@ -87,28 +68,17 @@ def calculate_vector(date_str):
 
     return code
 
-# Команда /start - СМС №1
+# Команда /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     chat_id = message.chat.id
     user_calculations.pop(chat_id, None)
-
-    admin_id = load_admin_id()
-    if admin_id is None:
-        save_admin_id(chat_id)
 
     welcome_text = (
         "Приветствуем в калькуляторе «Вектор Профессии»!\n"
         "Пожалуйста, нажмите кнопку start или отправьте вашу дату рождения в формате ДД.ММ.ГГГГ:"
     )
     bot.send_message(chat_id, welcome_text)
-
-# Ручная установка админа /setadmin
-@bot.message_handler(commands=['setadmin'])
-def set_admin_manually(message):
-    chat_id = message.chat.id
-    save_admin_id(chat_id)
-    bot.send_message(chat_id, "👑 Вы успешно назначены Администратором бота!")
 
 # Обработка ввода даты рождения
 @bot.message_handler(func=lambda message: True)
@@ -125,7 +95,7 @@ def handle_message(message):
         )
         return
 
-    # Расчет по оригинальной формуле
+    # Расчет по формуле
     arcana = calculate_vector(text)
     if arcana is None:
         bot.send_message(chat_id, "⚠️ Ошибка в дате. Пожалуйста, отправьте вашу дату рождения в формате ДД.ММ.ГГГГ:")
@@ -136,7 +106,6 @@ def handle_message(message):
         "arcana": arcana
     }
 
-    # СМС №2
     ready_text = (
         f"✅ Расчёт для даты {text} готов!\n\n"
         "🔒 Доступно после оплаты\n"
@@ -155,7 +124,6 @@ def handle_callback(call):
     chat_id = call.message.chat.id
     data = call.data
 
-    # СМС №3
     if data == "pay":
         markup = types.InlineKeyboardMarkup()
         btn_confirm = types.InlineKeyboardButton("✅ Я оплатил(а)", callback_data="i_paid")
@@ -164,7 +132,6 @@ def handle_callback(call):
         bot.send_message(chat_id, PAYMENT_REQUISITES, reply_markup=markup)
         bot.answer_callback_query(call.id)
 
-    # СМС №4 и уведомление админу
     elif data == "i_paid":
         bot.send_message(
             chat_id, 
@@ -172,33 +139,30 @@ def handle_callback(call):
         )
         bot.answer_callback_query(call.id)
 
-        admin_id = load_admin_id()
-        if admin_id:
-            user_info = user_calculations.get(chat_id, {})
-            user_date = user_info.get("date", "неизвестно")
+        user_info = user_calculations.get(chat_id, {})
+        user_date = user_info.get("date", "неизвестно")
 
-            username = call.from_user.username
-            user_link = f"@{username}" if username else f"ID: {chat_id}"
+        username = call.from_user.username
+        user_link = f"@{username}" if username else f"ID: {chat_id}"
 
-            admin_msg = (
-                f"🔔 **Новый запрос на подтверждение оплаты!**\n\n"
-                f"👤 Пользователь: {user_link}\n"
-                f"📅 Дата рождения: `{user_date}`\n"
-                f"💳 Сумма: 100 ₽\n\n"
-                f"Подтвердить доступ к расчёту?"
-            )
+        admin_msg = (
+            f"🔔 **Новый запрос на подтверждение оплаты!**\n\n"
+            f"👤 Пользователь: {user_link}\n"
+            f"📅 Дата рождения: `{user_date}`\n"
+            f"💳 Сумма: 100 ₽\n\n"
+            f"Подтвердить доступ к расчёту?"
+        )
 
-            admin_markup = types.InlineKeyboardMarkup()
-            btn_approve = types.InlineKeyboardButton("✅ Подтвердить", callback_data=f"approve_{chat_id}")
-            btn_reject = types.InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{chat_id}")
-            admin_markup.add(btn_approve, btn_reject)
+        admin_markup = types.InlineKeyboardMarkup()
+        btn_approve = types.InlineKeyboardButton("✅ Подтвердить", callback_data=f"approve_{chat_id}")
+        btn_reject = types.InlineKeyboardButton("❌ Отклонить", callback_data=f"reject_{chat_id}")
+        admin_markup.add(btn_approve, btn_reject)
 
-            try:
-                bot.send_message(admin_id, admin_msg, parse_mode="Markdown", reply_markup=admin_markup)
-            except Exception as e:
-                print(f"Ошибка отправки сообщения админу: {e}")
+        try:
+            bot.send_message(ADMIN_ID, admin_msg, parse_mode="Markdown", reply_markup=admin_markup)
+        except Exception as e:
+            print(f"Ошибка отправки сообщения админу: {e}")
 
-    # Подтверждение от администратора
     elif data.startswith("approve_"):
         target_chat_id = int(data.split("_")[1])
 
@@ -230,7 +194,6 @@ def handle_callback(call):
 
         bot.answer_callback_query(call.id)
 
-    # Отклонение от администратора
     elif data.startswith("reject_"):
         target_chat_id = int(data.split("_")[1])
         reject_msg = "⚠️ Денежный перевод не подтвержден."
