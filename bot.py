@@ -134,8 +134,8 @@ def handle_message(message):
     btn_pay = types.InlineKeyboardButton("🌟 ОПЛАТИТЬ", callback_data="pay")
     
     # Кнопки со ссылками на ваши файлы
-    btn_privacy = types.InlineKeyboardButton("Политика Конфиденциальности", url=f"{RENDER_URL}/privacy")
-    btn_terms = types.InlineKeyboardButton("Пользовательское соглашение", url=f"{RENDER_URL}/terms")
+    btn_privacy = types.InlineKeyboardButton("политика конфиденциальности", url=f"{RENDER_URL}/privacy")
+    btn_terms = types.InlineKeyboardButton("пользовательское соглашение", url=f"{RENDER_URL}/terms")
     
     markup.add(btn_pay)
     markup.add(btn_privacy)
