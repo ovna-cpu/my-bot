@@ -87,7 +87,7 @@ def send_welcome(message):
     user_calculations.pop(chat_id, None)
 
     welcome_text = (
-        "Приветствуем в калькуляторе «Вектор Профессии»!\n"
+        "ЧЕКАП Приветствуем в калькуляторе «Вектор Профессии»!\n"
         "Пожалуйста, отправь слово start или вашу дату рождения в формате ДД.ММ.ГГГГ:"
     )
     bot.send_message(chat_id, welcome_text)
