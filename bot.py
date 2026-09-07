@@ -5,10 +5,13 @@ import os
 import threading
 import telebot
 from telebot import types
-from flask import Flask
+from flask import Flask, send_from_directory
 
 # --- ВЕБ-СЕРВЕР ДЛЯ RENDER ---
 app = Flask('')
+
+# Ссылка из вашего личного кабинета Render
+RENDER_URL = "https://my-bot-47eg.onrender.com"
 
 @app.route('/')
 def home():
@@ -17,6 +20,15 @@ def home():
 @app.route('/health')
 def health():
     return "OK", 200
+
+# Команды, которые позволяют серверу "показывать" ваши HTML файлы
+@app.route('/privacy')
+def serve_privacy():
+    return send_from_directory(os.getcwd(), '01_Sait_Politika_konfidencialnosti.html')
+
+@app.route('/terms')
+def serve_terms():
+    return send_from_directory(os.getcwd(), '02_Sait_Publichnaya_oferta.html')
 
 def run_web_server():
     port = int(os.environ.get("PORT", 8080))
@@ -117,11 +129,20 @@ def handle_message(message):
         " поддержка: @poleznoe_tut_polza"
     )
 
+    # КНОПКИ
     markup = types.InlineKeyboardMarkup()
     btn_pay = types.InlineKeyboardButton("🌟 ОПЛАТИТЬ", callback_data="pay")
+    
+    # Кнопки со ссылками на ваши файлы
+    btn_privacy = types.InlineKeyboardButton("Политика Конфиденциальности", url=f"{RENDER_URL}/privacy")
+    btn_terms = types.InlineKeyboardButton("Пользовательское соглашение", url=f"{RENDER_URL}/terms")
+    
     markup.add(btn_pay)
+    markup.add(btn_privacy)
+    markup.add(btn_terms)
 
-    bot.send_message(chat_id, ready_text, reply_markup=markup)
+    # Отправляем сообщение с кнопками (disable_web_page_preview убирает ненужное превью ссылки в чате)
+    bot.send_message(chat_id, ready_text, reply_markup=markup, disable_web_page_preview=True)
 
 # Обработка нажатий на кнопки
 @bot.callback_query_handler(func=lambda call: True)
