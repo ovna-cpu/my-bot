@@ -36,7 +36,7 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-BOT_TOKEN = "8178571912:AAEwOLaU7SYCscdpYs4hrUFEU_J-w6MRuh4"
+BOT_TOKEN = "ВАШ_ТЕКУЩИЙ_BOT_TOKEN"
 ADMIN_ID = 381819608  # Ваш Telegram ID для уведомлений
 
 # === PLATEGA ===
@@ -44,7 +44,7 @@ try:
     from platega_config import PLATEGA_MERCHANT_ID, PLATEGA_SECRET
 except Exception:
     PLATEGA_MERCHANT_ID = "4ecefadd-df1e-4625-bf05-84d4351bb3ca"
-    PLATEGA_SECRET = "fspcdaPEJURWPGYwqgP5cHhE6ku6LuBTyi82JFkNflIVI1OyYlC9AyxpvwBjEGzSZjzxI5Y1q8H5p4BR7ATwJjRehNqDnbzhv7tS"
+    PLATEGA_SECRET = "ВАШ_API_SECRET"
 
 # Реквизиты для оплаты
 PAYMENT_REQUISITES = (
@@ -265,6 +265,52 @@ def payment_success():
 @app.route('/payment_failed')
 def payment_failed():
     return "Оплата не завершена.", 200
+
+
+# === ТЕСТ БЕЗ ОПЛАТЫ ===
+@bot.message_handler(commands=['test'])
+def test_payment(message):
+    chat_id = message.chat.id
+
+    user_info = user_calculations.get(chat_id, {})
+
+    if not user_info:
+        bot.send_message(
+            chat_id,
+            "Сначала отправьте дату рождения."
+        )
+        return
+
+    arcana = user_info.get("arcana")
+
+    if arcana and str(arcana) in professions:
+        desc = professions[str(arcana)]
+    elif arcana and arcana in professions:
+        desc = professions[arcana]
+    else:
+        desc = "Описание профессии формируется..."
+
+    success_msg = (
+        f"Ваш Вектор Профессии:\n\n"
+        f"{desc}\n\n"
+        f"Полученный результат носит информационно-рекомендательный и развлекательный характер.\n"
+        f"Интерпретация представляет собой обобщённый взгляд, а не абсолютную истину или готовую инструкцию для принятия решений."
+    )
+
+    try:
+        bot.send_message(
+            chat_id,
+            success_msg
+        )
+
+        bot.send_message(
+            ADMIN_ID,
+            f"🧪 **ТЕСТ: результат пользователя {chat_id} выдан без оплаты.**",
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        print(f"Ошибка отправки тестового результата: {e}")
 
 
 # Команда /start
