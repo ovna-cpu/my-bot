@@ -36,7 +36,7 @@ def run_web_server():
     app.run(host='0.0.0.0', port=port)
 
 # === НАСТРОЙКИ БОТА ===
-BOT_TOKEN = "ВАШ_ТЕКУЩИЙ_BOT_TOKEN"
+BOT_TOKEN = "8178571912:AAEwOLaU7SYCscdpYs4hrUFEU_J-w6MRuh4"
 ADMIN_ID = 381819608  # Ваш Telegram ID для уведомлений
 
 # === PLATEGA ===
